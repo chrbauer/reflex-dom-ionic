@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Reflex.Dom.Widget.Ionic
-  (ionTextInput)
+  (ionInputElement)
 where
 
 import Control.Lens (Identity(..), imapM_, iforM_, (^.), makeLenses)
@@ -40,30 +40,11 @@ import Data.Text(Text)
 import qualified Data.Map as Map
 import Data.Map (Map)
 
-{-# INLINABLE ionTextInput #-}
-ionTextInput :: (MonadWidget t m, DomBuilderSpace m ~ GhcjsDomSpace, Ref m ~ IORef, DomRenderHook t m) => TextInputConfig t -> m (TextInput t)
-ionTextInput (TextInputConfig inputType initial eSetValue dAttrs) = do
-  let dynAttrs = fmap (Map.insert "type" inputType) dAttrs
-  i <- ionInputElement dynAttrs$ def
-    & inputElementConfig_initialValue .~ initial
-    & inputElementConfig_setValue .~ eSetValue
-    -- & inputElementConfig_elementConfig . elementConfig_modifyAttributes .~ fmap mapKeysToAttributeName modifyAttrs
-  return $ TextInput
-    { _textInput_value = _inputElement_value i
-    , _textInput_input = _inputElement_input i
-    , _textInput_keypress = domEvent Keypress i
-    , _textInput_keydown = domEvent Keydown i
-    , _textInput_keyup = domEvent Keyup i
-    , _textInput_hasFocus = _inputElement_hasFocus i
-    , _textInput_builderElement = i
-    }
-
-
 ionInputElement
   :: (MonadWidget t m, DomRenderHook t m)
-  => Dynamic t (Map Text Text) -> InputElementConfig EventResult t GhcjsDomSpace -> m (InputElement EventResult GhcjsDomSpace t)
-ionInputElement dynAttrs cfg  = do
-  (e, ()) <- elDynAttr' "ion-input"  dynAttrs  $ return ()
+  => Text -> InputElementConfig EventResult t GhcjsDomSpace -> m (InputElement EventResult GhcjsDomSpace t)
+ionInputElement tag cfg  = do
+  (e, ()) <- element tag  (cfg ^. inputElementConfig_elementConfig)  $ return ()
   let domInputElement = uncheckedCastTo DOM.HTMLInputElement $ _element_raw e
       eventSelector = _element_events e
   Input.setValue domInputElement $ cfg ^. inputElementConfig_initialValue

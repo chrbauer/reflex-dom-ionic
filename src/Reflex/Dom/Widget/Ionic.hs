@@ -42,7 +42,7 @@ import Data.Map (Map)
 
 ionInputElement
   :: (MonadWidget t m, DomRenderHook t m)
-  => Text -> InputElementConfig EventResult t GhcjsDomSpace -> m (InputElement EventResult GhcjsDomSpace t)
+  => Text -> InputElementConfig EventResult t (DomBuilderSpace m) -> m (InputElement EventResult  (DomBuilderSpace m) t)
 ionInputElement tag cfg  = do
   (e, ()) <- element tag  (cfg ^. inputElementConfig_elementConfig)  $ return ()
   let domInputElement = uncheckedCastTo DOM.HTMLInputElement $ _element_raw e

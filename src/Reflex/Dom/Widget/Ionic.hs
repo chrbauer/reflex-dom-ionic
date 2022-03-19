@@ -23,6 +23,7 @@ import qualified GHCJS.DOM.EventM as DOM
 import qualified GHCJS.DOM.FileList as FileList
 import qualified GHCJS.DOM.GlobalEventHandlers as Events
 import qualified GHCJS.DOM.HTMLInputElement as Input
+import qualified GHCJS.DOM.HTMLSelectElement as Select
 
 import qualified GHCJS.DOM.Text as DOM
 import qualified GHCJS.DOM.Types as DOM
@@ -39,6 +40,8 @@ import Reflex.Dynamic
 import Data.Text(Text)
 import qualified Data.Map as Map
 import Data.Map (Map)
+
+
 
 ionInputElement
   :: (MonadWidget t m, DomRenderHook t m)
@@ -93,3 +96,32 @@ ionInputElement tag cfg  = do
     }
 
 
+ionSelectElement :: (MonadWidget t m, DomRenderHook t m)
+  => Text -> SelectElementConfig EventResult t (DomBuilderSpace m) ->
+  m r ->
+  m (SelectElement EventResult  (DomBuilderSpace m) t, r)
+ionSelectElement tag cfg child = do
+  (e@(Element eventSelector domElement), result) <- element tag  (cfg ^. selectElementConfig_elementConfig) $ child
+  let domSelectElement = uncheckedCastTo DOM.HTMLSelectElement domElement
+  Select.setValue domSelectElement $ cfg ^. selectElementConfig_initialValue
+  v0 <- Select.getValue domSelectElement
+  let getMyValue = Select.getValue domSelectElement
+  valueChangedByUI <- requestDomAction $ liftJSM getMyValue <$ Reflex.select eventSelector (WrapArg Change)
+  valueChangedBySetValue <- case _selectElementConfig_setValue cfg of
+    Nothing -> return never
+    Just eSetValue -> requestDomAction $ ffor eSetValue $ \v' -> do
+      Select.setValue domSelectElement v'
+      getMyValue -- We get the value after setting it in case the browser has mucked with it somehow
+  v <- holdDyn v0 $ leftmost
+    [ valueChangedBySetValue
+    , valueChangedByUI
+    ]
+  hasFocus <- mkHasFocus e
+  let wrapped = SelectElement
+        { _selectElement_value = v
+        , _selectElement_change = valueChangedByUI
+        , _selectElement_hasFocus = hasFocus
+        , _selectElement_element = e
+        , _selectElement_raw = domSelectElement
+        }
+  return (wrapped, result)

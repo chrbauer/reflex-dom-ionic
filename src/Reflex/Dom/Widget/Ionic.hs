@@ -26,6 +26,9 @@ import qualified GHCJS.DOM.GlobalEventHandlers as Events
 import qualified GHCJS.DOM.HTMLInputElement as Input
 import qualified GHCJS.DOM.HTMLSelectElement as Select
 
+import qualified GHCJS.DOM.EventTargetClosures as DOM (EventName, unsafeEventName, unsafeEventNameAsync)
+--import qualified GHCJS.DOM.Types as DOM
+--import qualified GHCJS.DOM.EventM as DOM
 import qualified GHCJS.DOM.Text as DOM
 import qualified GHCJS.DOM.Types as DOM
 
@@ -41,8 +44,9 @@ import Reflex.Dynamic
 import Data.Text(Text)
 import qualified Data.Map as Map
 import Data.Map (Map)
+import Reflex.TriggerEvent.Class (TriggerEvent)
 
-
+default (Text)
 
 ionInputElement
   :: (MonadWidget t m, DomRenderHook t m)
@@ -97,7 +101,7 @@ ionInputElement tag cfg  = do
     }
 
 
-ionSelectElement :: (MonadWidget t m, DomRenderHook t m)
+ionSelectElement :: (MonadWidget t m, DomRenderHook t m, TriggerEvent t m )
   => Text -> SelectElementConfig EventResult t (DomBuilderSpace m) ->
   m r ->
   m (SelectElement EventResult  (DomBuilderSpace m) t, r)
@@ -107,7 +111,10 @@ ionSelectElement tag cfg child = do
   Select.setValue domSelectElement $ cfg ^. selectElementConfig_initialValue
   v0 <- Select.getValue domSelectElement
   let getMyValue = Select.getValue domSelectElement
-  valueChangedByUI <- requestDomAction $ liftJSM getMyValue <$ Reflex.select eventSelector (WrapArg Change)
+      ionChange :: (DOM.IsGlobalEventHandlers self, DOM.IsEventTarget self) => DOM.EventName self DOM.Event
+      ionChange = DOM.unsafeEventName (DOM.toJSString ("ionChange" :: Text))
+  valueChangedByUI <- wrapDomEvent (DOM.uncheckedCastTo DOM.HTMLElement $ domElement) (`DOM.on` ionChange) $ do
+    liftJSM getMyValue
   valueChangedBySetValue <- case _selectElementConfig_setValue cfg of
     Nothing -> return never
     Just eSetValue -> requestDomAction $ ffor eSetValue $ \v' -> do

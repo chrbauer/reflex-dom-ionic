@@ -2,15 +2,20 @@ cabal-version:      2.4
 name:               reflex-dom-ionic
 version:            0.1.0.0
 
--- A short (one-line) description of the package.
--- synopsis:
+
+synopsis: Compatible highlevel Wigdets for some Ionic Input Components
 
 -- A longer description of the package.
--- description:
+description:
+     Reflex-DOM is a very powerful web framework for functional reactive programming (FRP).
+     It contains some highlevel Widgets for Input.
+
+     This library provides widgets for ion-input and ion-select.
 
 -- A URL where users can report bugs.
--- bug-reports:
-
+bug-reports: https://github.com/chrbauer/reflex-dom-ionic/issues
+homepage:  https://github.com/chrbauer/reflex-dom-ionic
+           
 license: BSD-3-Clause
 author:             Christoph Bauer
 maintainer:         mail@christoph-bauer.net

@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Reflex.Dom.Widget.Ionic
-  (ionInputElement)
+  (ionInputElement,
+  ionSelectElement)
 where
 
 import Control.Lens (Identity(..), imapM_, iforM_, (^.), makeLenses)

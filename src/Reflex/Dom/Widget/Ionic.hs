@@ -3,7 +3,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Reflex.Dom.Widget.Ionic
   (ionInputElement,
-  ionSelectElement)
+  ionSelectElement,
+  ionTextAreaElement)
 where
 
 import Control.Lens (Identity(..), imapM_, iforM_, (^.), makeLenses)

@@ -25,6 +25,8 @@ import qualified GHCJS.DOM.FileList as FileList
 import qualified GHCJS.DOM.GlobalEventHandlers as Events
 import qualified GHCJS.DOM.HTMLInputElement as Input
 import qualified GHCJS.DOM.HTMLSelectElement as Select
+import qualified GHCJS.DOM.HTMLTextAreaElement as TextArea
+
 
 import qualified GHCJS.DOM.EventTargetClosures as DOM (EventName, unsafeEventName, unsafeEventNameAsync)
 --import qualified GHCJS.DOM.Types as DOM
@@ -133,3 +135,33 @@ ionSelectElement tag cfg child = do
         , _selectElement_raw = domSelectElement
         }
   return (wrapped, result)
+
+
+ionTextAreaElement
+  :: (MonadWidget t m, DomRenderHook t m, TriggerEvent t m )
+  => TextAreaElementConfig EventResult t (DomBuilderSpace m) ->
+  m (TextAreaElement EventResult  (DomBuilderSpace m) t)
+ionTextAreaElement cfg = do
+  (e@(Element eventSelector domElement), _) <- element "ion-textarea" (cfg ^. textAreaElementConfig_elementConfig) $ return ()
+  let domTextAreaElement = uncheckedCastTo DOM.HTMLTextAreaElement domElement
+  TextArea.setValue domTextAreaElement $ cfg ^. textAreaElementConfig_initialValue
+  v0 <- TextArea.getValue domTextAreaElement
+  let getMyValue = TextArea.getValue domTextAreaElement
+  valueChangedByUI <- requestDomAction $ liftJSM getMyValue <$ Reflex.select eventSelector (WrapArg Input)
+  valueChangedBySetValue <- case _textAreaElementConfig_setValue cfg of
+    Nothing -> return never
+    Just eSetValue -> requestDomAction $ ffor eSetValue $ \v' -> do
+      TextArea.setValue domTextAreaElement v'
+      getMyValue -- We get the value after setting it in case the browser has mucked with it somehow
+  v <- holdDyn v0 $ leftmost
+    [ valueChangedBySetValue
+    , valueChangedByUI
+    ]
+  hasFocus <- mkHasFocus e
+  return $ TextAreaElement
+    { _textAreaElement_value = v
+    , _textAreaElement_input = valueChangedByUI
+    , _textAreaElement_hasFocus = hasFocus
+    , _textAreaElement_element = e
+    , _textAreaElement_raw = domTextAreaElement
+    }
